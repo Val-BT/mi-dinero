@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f7f2f7">
+  <meta name="description" content="Tu app privada para organizar ingresos, gastos y apartados en pesos mexicanos.">
+  <link rel="manifest" href="manifest.json">
+  <title>Mi Dinero</title>
+  <style>
+    :root { --bg:#f8f5f8; --card:#fff; --ink:#28232b; --muted:#766d79; --accent:#805a83; --accent2:#efe4f0; --line:#eee7ef; --green:#2f7d5b; --red:#b44758; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; }
+    header { padding:24px 18px 18px; background:linear-gradient(145deg,#f2e8f3,#fbf8fb); border-bottom:1px solid var(--line); }
+    .wrap { max-width:760px; margin:auto; }
+    .eyebrow { color:var(--accent); font-weight:700; font-size:.78rem; letter-spacing:.08em; text-transform:uppercase; }
+    h1 { font-size:1.8rem; margin:.25rem 0; letter-spacing:-.04em; }
+    .sub { color:var(--muted); margin:0; }
+    main { padding:16px; max-width:760px; margin:auto; padding-bottom:40px; }
+    .summary { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .card { background:var(--card); border:1px solid var(--line); border-radius:18px; padding:16px; box-shadow:0 3px 14px #3d214008; }
+    .wide { grid-column:1/-1; }
+    .label { font-size:.82rem; color:var(--muted); }
+    .amount { font-size:1.45rem; font-weight:750; letter-spacing:-.03em; margin-top:5px; overflow-wrap:anywhere; }
+    .positive { color:var(--green); } .negative { color:var(--red); }
+    .tabs { display:flex; gap:8px; overflow:auto; padding:14px 0; }
+    .tab, button { border:0; border-radius:12px; padding:11px 14px; background:var(--accent2); color:var(--accent); font-weight:700; font-size:.92rem; cursor:pointer; }
+    .tab.active, button.primary { background:var(--accent); color:white; }
+    section { margin-top:12px; }
+    h2 { font-size:1.12rem; margin:0 0 12px; }
+    label { display:block; font-size:.84rem; color:var(--muted); margin-bottom:5px; }
+    input, select, textarea { width:100%; border:1px solid #e3d9e5; background:white; border-radius:11px; padding:12px; font:inherit; color:var(--ink); }
+    input:focus, select:focus, textarea:focus { outline:2px solid #c9acd0; border-color:var(--accent); }
+    .formgrid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .field { min-width:0; } .field.full { grid-column:1/-1; }
+    .actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+    .secondary { background:#f2eef3; color:#4e4351; }
+    .danger { background:#fae8eb; color:#a12d41; }
+    .hint { font-size:.82rem; color:var(--muted); margin:10px 0 0; }
+    .list { display:flex; flex-direction:column; gap:8px; }
+    .item { display:flex; justify-content:space-between; align-items:center; gap:12px; border-bottom:1px solid var(--line); padding:10px 0; }
+    .item:last-child { border-bottom:0; }
+    .itemtitle { font-weight:650; overflow-wrap:anywhere; }
+    .itemmeta { font-size:.8rem; color:var(--muted); }
+    .itemamount { font-weight:750; white-space:nowrap; }
+    .empty { padding:20px 4px; text-align:center; color:var(--muted); }
+    .hidden { display:none !important; }
+    .notice { background:#fff9e8; border:1px solid #f2e4b9; color:#66521a; border-radius:12px; padding:12px; font-size:.84rem; margin-top:12px; }
+    footer { color:var(--muted); font-size:.78rem; text-align:center; padding:20px 10px 6px; }
+    @media(max-width:420px) { .formgrid { grid-template-columns:1fr; } .field.full { grid-column:auto; } .amount { font-size:1.25rem; } }
+  </style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="eyebrow">Tus finanzas, a tu ritmo</div>
+    <h1>Mi Dinero 💜</h1>
+    <p class="sub">Un lugar sencillo para cuidar cada peso.</p>
+  </div>
+</header>
+<main>
+  <div class="summary">
+    <div class="card wide">
+      <div class="label">Balance de movimientos registrados</div>
+      <div class="amount" id="balance">$0.00</div>
+      <div class="hint">Ingresos menos gastos. No equivale necesariamente al saldo bancario real.</div>
+    </div>
+    <div class="card">
+      <div class="label">Ingresos del mes</div>
+      <div class="amount positive" id="income">$0.00</div>
+    </div>
+    <div class="card">
+      <div class="label">Gastos del mes</div>
+      <div class="amount negative" id="expenses">$0.00</div>
+    </div>
+  </div>
+
+  <nav class="tabs" aria-label="Secciones">
+    <button class="tab active" data-tab="movements">Movimientos</button>
+    <button class="tab" data-tab="add">＋ Registrar</button>
+    <button class="tab" data-tab="backup">Respaldo</button>
+  </nav>
+
+  <section id="view-movements" class="card">
+    <h2>Movimientos recientes</h2>
+    <div class="formgrid" style="margin-bottom:12px">
+      <div class="field">
+        <label for="filterType">Tipo</label>
+        <select id="filterType">
+          <option value="all">Todos</option><option value="income">Ingresos</option><option value="expense">Gastos</option><option value="transfer">Traspasos</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="filterMonth">Mes</label>
+        <input id="filterMonth" type="month">
+      </div>
+    </div>
+    <div id="movementList" class="list"></div>
+  </section>
+
+  <section id="view-add" class="card hidden">
+    <h2>Registrar movimiento</h2>
+    <form id="movementForm">
+      <div class="formgrid">
+        <div class="field">
+          <label for="type">Tipo de movimiento</label>
+          <select id="type" required>
+            <option value="expense">Gasto</option><option value="income">Ingreso</option><option value="transfer">Traspaso entre cuentas</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="amount">Monto (MXN)</label>
+          <input id="amount" type="number" min="0.01" step="0.01" placeholder="0.00" required>
+        </div>
+        <div class="field">
+          <label for="date">Fecha</label>
+          <input id="date" type="date" required>
+        </div>
+        <div class="field">
+          <label for="category">Categoría</label>
+          <select id="category" required></select>
+        </div>
+        <div class="field full">
+          <label for="description">Descripción</label>
+          <input id="description" maxlength="100" placeholder="Ej. gasolina, súper, nómina…" required>
+        </div>
+        <div class="field">
+          <label for="account">Cuenta / medio</label>
+          <select id="account">
+            <option>Débito</option><option>Crédito</option><option>Efectivo</option><option>Stori</option><option>Transferencia</option><option>Otro</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="period">Quincena</label>
+          <select id="period"><option value="1">Primera quincena</option><option value="2">Segunda quincena</option></select>
+        </div>
+        <div class="field full">
+          <label for="notes">Notas (opcional)</label>
+          <textarea id="notes" rows="2" maxlength="300" placeholder="Detalle adicional…"></textarea>
+        </div>
+      </div>
+      <div class="actions"><button class="primary" type="submit">Guardar movimiento</button><button class="secondary" type="reset">Limpiar</button></div>
+      <p class="hint">Los movimientos se guardan en este navegador de este dispositivo.</p>
+    </form>
+  </section>
+
+  <section id="view-backup" class="card hidden">
+    <h2>Respaldo y privacidad</h2>
+    <p>Por ahora, tus registros se guardan localmente en este navegador. Exporta una copia con frecuencia y guárdala en un lugar privado.</p>
+    <div class="actions">
+      <button class="primary" id="exportBtn">Exportar respaldo (.json)</button>
+      <button class="secondary" id="exportCsvBtn">Exportar movimientos (.csv)</button>
+    </div>
+    <div style="margin-top:16px">
+      <label for="importFile">Restaurar desde un respaldo JSON</label>
+      <input id="importFile" type="file" accept=".json,application/json">
+      <div class="actions"><button class="secondary" id="importBtn">Importar respaldo</button></div>
+    </div>
+    <div class="notice"><strong>Importante:</strong> no guardes contraseñas, NIP, CVV ni números completos de tarjetas. Si borras los datos del navegador o pierdes el celular sin respaldo, los movimientos podrían perderse. Esta versión no sincroniza con la nube ni está protegida por una contraseña propia.</div>
+    <div class="actions"><button class="danger" id="clearBtn">Borrar todos mis datos</button></div>
+  </section>
+  <footer>Mi Dinero · Versión inicial · Montos en pesos mexicanos</footer>
+</main>
+<script>
+(() => {
+  const KEY = 'miDinero.v1.movements';
+  const $ = id => document.getElementById(id);
+  const money = n => new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN'}).format(Number(n)||0);
+  const today = new Date();
+  const localDate = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  const localMonth = localDate.slice(0,7);
+  $('date').value = localDate;
+  $('filterMonth').value = localMonth;
+  $('period').value = today.getDate() <= 15 ? '1' : '2';
+
+  const categories = {
+    expense:['Comida','Súper y despensa','Gasolina','Transporte','Hogar y servicios','Salud','Belleza y cuidado personal','Ropa','Entretenimiento','Suscripciones','Deudas y tarjetas','Mascotas','Regalos','Viajes','Otros gastos'],
+    income:['Sueldo / nómina','Horas extra','Vales de despensa','Reembolso','Intereses','Venta','Otros ingresos'],
+    transfer:['Traspaso entre cuentas','Apartado de ahorro']
+  };
+  function load() {
+    try { const data = JSON.parse(localStorage.getItem(KEY) || '[]'); return Array.isArray(data) ? data : []; }
+    catch { return []; }
+  }
+  let movements = load();
+  function save() { localStorage.setItem(KEY, JSON.stringify(movements)); render(); }
+  function updateCategories() {
+    const type = $('type').value;
+    $('category').innerHTML = categories[type].map(c=>`<option>${escapeHtml(c)}</option>`).join('');
+  }
+  function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function render() {
+    const monthMoves = movements.filter(m=>m.date && m.date.slice(0,7)===localMonth);
+    const income = monthMoves.filter(m=>m.type==='income').reduce((a,m)=>a+m.amount,0);
+    const expense = monthMoves.filter(m=>m.type==='expense').reduce((a,m)=>a+m.amount,0);
+    const allIncome = movements.filter(m=>m.type==='income').reduce((a,m)=>a+m.amount,0);
+    const allExpense = movements.filter(m=>m.type==='expense').reduce((a,m)=>a+m.amount,0);
+    $('balance').textContent = money(allIncome-allExpense);
+    $('income').textContent = money(income);
+    $('expenses').textContent = money(expense);
+    const type = $('filterType').value, month = $('filterMonth').value;
+    const filtered = movements.filter(m=>(type==='all'||m.type===type)&&(!month||m.date.startsWith(month))).sort((a,b)=>b.date.localeCompare(a.date)||b.createdAt-a.createdAt);
+    const list = $('movementList');
+    if (!filtered.length) { list.innerHTML = '<div class="empty">Todavía no hay movimientos para mostrar.<br>Registra el primero con ＋ Registrar.</div>'; return; }
+    list.innerHTML = filtered.map(m => {
+      const sign = m.type==='income'?'+':m.type==='expense'?'−':'↔';
+      const cls = m.type==='income'?'positive':m.type==='expense'?'negative':'';
+      const typ = m.type==='income'?'Ingreso':m.type==='expense'?'Gasto':'Traspaso';
+      return `<div class="item"><div style="min-width:0"><div class="itemtitle">${escapeHtml(m.description)}</div><div class="itemmeta">${escapeHtml(m.date)} · ${escapeHtml(m.category)} · ${escapeHtml(m.account)} · ${typ}</div></div><div style="text-align:right"><div class="itemamount ${cls}">${sign}${money(m.amount)}</div><button class="danger" style="padding:6px 9px;margin-top:5px;font-size:.75rem" data-delete="${m.id}">Eliminar</button></div></div>`;
+    }).join('');
+    list.querySelectorAll('[data-delete]').forEach(btn=>btn.addEventListener('click',()=>{
+      if(confirm('¿Eliminar este movimiento?')) { movements=movements.filter(m=>m.id!==btn.dataset.delete); save(); }
+    }));
+  }
+  document.querySelectorAll('.tab').forEach(btn=>btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b===btn));
+    ['movements','add','backup'].forEach(v=>$('view-'+v).classList.toggle('hidden',v!==btn.dataset.tab));
+  }));
+  $('type').addEventListener('change', updateCategories);
+  $('filterType').addEventListener('change',render);
+  $('filterMonth').addEventListener('change',render);
+  $('movementForm').addEventListener('submit',e=>{
+    e.preventDefault();
+    const amount = Number($('amount').value);
+    if(!Number.isFinite(amount)||amount<=0) return alert('Escribe un monto válido mayor que cero.');
+    movements.push({
+      id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())+Math.random()),
+      type:$('type').value, amount:Math.round(amount*100)/100, date:$('date').value,
+      category:$('category').value, description:$('description').value.trim(),
+      account:$('account').value, period:$('period').value, notes:$('notes').value.trim(),
+      createdAt:Date.now()
+    });
+    save(); e.target.reset(); $('date').value=localDate; $('period').value=today.getDate()<=15?'1':'2'; updateCategories();
+    document.querySelector('[data-tab="movements"]').click();
+  });
+  $('exportBtn').addEventListener('click',()=>{
+    download('mi-dinero-respaldo-'+localDate+'.json',JSON.stringify({app:'Mi Dinero',version:1,exportedAt:new Date().toISOString(),movements},null,2),'application/json');
+  });
+  $('exportCsvBtn').addEventListener('click',()=>{
+    const rows=[['Fecha','Tipo','Monto MXN','Categoría','Descripción','Cuenta','Quincena','Notas'],...movements.map(m=>[m.date,m.type,m.amount,m.category,m.description,m.account,m.period==='1'?'Primera':'Segunda',m.notes||''])];
+    const csv=rows.map(row=>row.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');
+    download('mi-dinero-movimientos-'+localDate+'.csv','\ufeff'+csv,'text/csv;charset=utf-8');
+  });
+  function download(name,data,type) {
+    const blob=new Blob([data],{type}), url=URL.createObjectURL(blob), a=document.createElement('a');
+    a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+  }
+  $('importBtn').addEventListener('click',async()=>{
+    const file=$('importFile').files[0]; if(!file) return alert('Primero selecciona un archivo JSON.');
+    try {
+      const parsed=JSON.parse(await file.text());
+      const incoming=Array.isArray(parsed)?parsed:parsed.movements;
+      if(!Array.isArray(incoming)||!incoming.every(m=>m&&typeof m.amount==='number'&&m.date&&m.type)) throw new Error('Formato no válido');
+      if(!confirm('Importar reemplazará los movimientos actuales. Exporta un respaldo primero. ¿Continuar?')) return;
+      movements=incoming;save();alert('Respaldo importado.');
+    } catch { alert('No se pudo importar. Verifica que sea un respaldo JSON válido de Mi Dinero.'); }
+  });
+  $('clearBtn').addEventListener('click',()=>{
+    if(confirm('¿Seguro que quieres borrar TODOS los movimientos de este navegador? Esta acción no se puede deshacer.')) {
+      if(confirm('Última confirmación: ¿borrar todos los datos?')) { movements=[];save(); }
+    }
+  });
+  updateCategories(); render();
+  if('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));
+  }
+})();
+</script>
+</body>
+</html>

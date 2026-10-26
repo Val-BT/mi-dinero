@@ -1,0 +1,10 @@
+{
+  "name": "Mi Dinero",
+  "short_name": "Mi Dinero",
+  "description": "Finanzas personales privadas en pesos mexicanos",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f8f5f8",
+  "theme_color": "#f7f2f7",
+  "icons": []
+}
