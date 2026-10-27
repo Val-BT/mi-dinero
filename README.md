@@ -1,25 +1,18 @@
-# Mi Dinero — versión inicial
+# Mi Dinero — versión con cifrado local
 
-Esta es una app web instalable (PWA) para registrar manualmente ingresos, gastos y traspasos, filtrar movimientos y exportar/restaurar respaldos.
+Aplicación web estática para registrar movimientos financieros manualmente.
 
-## Importante sobre privacidad
-- Los movimientos se guardan en `localStorage` del navegador de ese dispositivo.
-- No hay cuenta de usuario, servidor, sincronización ni conexión bancaria.
-- Exportar el JSON crea una copia con tus datos: guárdala en un lugar privado.
-- Si borras los datos del navegador, puedes perder los movimientos.
-- No guardes NIP, CVV, contraseñas ni números completos de tarjetas.
-- Esta versión inicial no tiene bloqueo con contraseña ni cifrado propio.
+## Seguridad de esta versión
+- Los movimientos se cifran en el navegador antes de guardarse usando AES-256-GCM.
+- La clave se deriva de una contraseña mediante PBKDF2-SHA-256 (310,000 iteraciones) y una sal aleatoria.
+- La contraseña no se guarda. La app se bloquea automáticamente tras 5 minutos de inactividad.
+- Los respaldos JSON exportados contienen solo el sobre cifrado; necesitan la misma contraseña para restaurarse.
+- Los CSV son texto legible sin cifrar y la app muestra una advertencia antes de exportarlos.
+- No hay servidor ni sincronización en la nube. Para usar en otro dispositivo, hay que trasladar el respaldo cifrado y conocer la contraseña.
+- Si se olvida la contraseña y no hay una sesión desbloqueada, los datos no se pueden recuperar.
 
-## Para probarla
-Abre `index.html` en un navegador moderno. El registro funciona, pero la instalación PWA y el modo offline requieren servir la app desde HTTPS o desde `localhost`.
+## Límites importantes
+Es una implementación inicial y no una auditoría de seguridad profesional. El código de la app se publica en GitHub Pages. Mientras está desbloqueada, un navegador o una versión de la app comprometidos podrían acceder a los datos en memoria. Usa bloqueo de pantalla en el dispositivo, contraseña única, copias cifradas y mantén el navegador actualizado. No guardes NIP, CVV, contraseñas bancarias ni números completos de tarjetas.
 
-## Para instalarla en Android
-1. Publica los archivos en un hosting estático HTTPS de confianza (por ejemplo, un proveedor que permita despliegue estático gratuito).
-2. Abre la dirección en Chrome en tu Samsung.
-3. Abre el menú de Chrome y elige “Instalar aplicación” o “Añadir a pantalla de inicio” (el texto puede variar).
-4. Antes de registrar gastos reales, exporta un respaldo de prueba y comprueba que puedes importarlo.
-
-## Archivos
-- `index.html`: interfaz y lógica de la app.
-- `manifest.json`: configuración de instalación.
-- `service-worker.js`: caché básica para funcionamiento offline tras la primera carga.
+## Publicación
+Sube `index.html`, `manifest.json`, `service-worker.js` y `README.md` a la raíz del repositorio de GitHub Pages, reemplazando los archivos existentes. No subas respaldos financieros al repositorio.

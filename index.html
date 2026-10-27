@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f7f2f7">
-  <meta name="description" content="Tu app privada para organizar ingresos, gastos y apartados en pesos mexicanos.">
+  <meta name="description" content="Mi Dinero: registro local con cifrado y respaldo protegido.">
   <link rel="manifest" href="manifest.json">
   <title>Mi Dinero</title>
   <style>
@@ -47,10 +47,33 @@
     .hidden { display:none !important; }
     .notice { background:#fff9e8; border:1px solid #f2e4b9; color:#66521a; border-radius:12px; padding:12px; font-size:.84rem; margin-top:12px; }
     footer { color:var(--muted); font-size:.78rem; text-align:center; padding:20px 10px 6px; }
+    .gate { min-height:100dvh; display:flex; align-items:center; justify-content:center; padding:20px; background:linear-gradient(145deg,#f2e8f3,#fbf8fb); }
+    .gatecard { width:100%; max-width:440px; background:#fff; border:1px solid var(--line); border-radius:22px; padding:22px; box-shadow:0 8px 30px #3d214010; }
+    .gatecard h1 { margin-top:0; } .gatecard .field { margin-top:12px; }
+    .gatecard button { width:100%; margin-top:14px; }
+    .securitynote { font-size:.82rem; color:var(--muted); margin-top:14px; }
+    .securitybar { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:10px 0; }
+    .securitybar button { font-size:.8rem; padding:8px 10px; }
+    .notice.dangertext { background:#fff0f2; border-color:#f2cdd3; color:#8a2635; }
     @media(max-width:420px) { .formgrid { grid-template-columns:1fr; } .field.full { grid-column:auto; } .amount { font-size:1.25rem; } }
   </style>
 </head>
 <body>
+<div id="gate" class="gate">
+  <div class="gatecard">
+    <div class="eyebrow">Privacidad primero</div>
+    <h1>Mi Dinero 💜</h1>
+    <p id="gateIntro">Crea una contraseña para cifrar tus datos en este dispositivo.</p>
+    <form id="gateForm">
+      <div class="field"><label for="password">Contraseña de Mi Dinero</label><input id="password" type="password" minlength="12" autocomplete="current-password" required placeholder="Usa una frase larga y única"></div>
+      <div class="field hidden" id="confirmWrap"><label for="passwordConfirm">Repite la contraseña</label><input id="passwordConfirm" type="password" minlength="12" autocomplete="new-password" placeholder="Escríbela de nuevo"></div>
+      <button id="gateSubmit" class="primary" type="submit">Desbloquear</button>
+    </form>
+    <div id="gateMessage" class="notice hidden" role="status"></div>
+    <p class="securitynote">Los registros se cifran antes de guardarse en este navegador. La contraseña no se guarda. Si la olvidas y no tienes una copia accesible, no podremos recuperar los datos. Usa una contraseña/frase única de al menos 12 caracteres y guárdala en un gestor de contraseñas.</p>
+  </div>
+</div>
+<div id="appShell" class="hidden">
 <header>
   <div class="wrap">
     <div class="eyebrow">Tus finanzas, a tu ritmo</div>
@@ -75,6 +98,7 @@
     </div>
   </div>
 
+  <div class="securitybar"><span class="label">🔒 Almacenamiento cifrado en este dispositivo</span><button type="button" id="lockBtn" class="secondary">Bloquear</button></div>
   <nav class="tabs" aria-label="Secciones">
     <button class="tab active" data-tab="movements">Movimientos</button>
     <button class="tab" data-tab="add">＋ Registrar</button>
@@ -146,124 +170,138 @@
 
   <section id="view-backup" class="card hidden">
     <h2>Respaldo y privacidad</h2>
-    <p>Por ahora, tus registros se guardan localmente en este navegador. Exporta una copia con frecuencia y guárdala en un lugar privado.</p>
+    <p>Los movimientos se cifran en este dispositivo con AES-GCM. El código de la app es público, pero no contiene tus movimientos. No hay sincronización entre dispositivos; para pasar datos a otro equipo usa el respaldo cifrado.</p>
     <div class="actions">
-      <button class="primary" id="exportBtn">Exportar respaldo (.json)</button>
-      <button class="secondary" id="exportCsvBtn">Exportar movimientos (.csv)</button>
+      <button class="primary" id="exportBtn">Exportar respaldo cifrado (.json)</button>
+      <button class="secondary" id="exportCsvBtn">Exportar movimientos (.csv sin cifrar)</button>
     </div>
     <div style="margin-top:16px">
-      <label for="importFile">Restaurar desde un respaldo JSON</label>
+      <label for="importFile">Restaurar desde un respaldo cifrado JSON</label>
       <input id="importFile" type="file" accept=".json,application/json">
       <div class="actions"><button class="secondary" id="importBtn">Importar respaldo</button></div>
     </div>
-    <div class="notice"><strong>Importante:</strong> no guardes contraseñas, NIP, CVV ni números completos de tarjetas. Si borras los datos del navegador o pierdes el celular sin respaldo, los movimientos podrían perderse. Esta versión no sincroniza con la nube ni está protegida por una contraseña propia.</div>
+    <div class="notice"><strong>Importante:</strong> los respaldos JSON están cifrados y requieren la misma contraseña para restaurarse. El CSV NO está cifrado; guárdalo solo si lo necesitas y en un lugar privado. No guardes contraseñas bancarias, NIP, CVV ni números completos de tarjetas. Si olvidas la contraseña, no hay recuperación. La app no sincroniza con la nube.</div>
     <div class="actions"><button class="danger" id="clearBtn">Borrar todos mis datos</button></div>
   </section>
-  <footer>Mi Dinero · Versión inicial · Montos en pesos mexicanos</footer>
+  <footer>Mi Dinero · Versión cifrada local · Montos en pesos mexicanos</footer>
 </main>
+</div>
 <script>
 (() => {
-  const KEY = 'miDinero.v1.movements';
-  const $ = id => document.getElementById(id);
-  const money = n => new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN'}).format(Number(n)||0);
-  const today = new Date();
-  const localDate = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
-  const localMonth = localDate.slice(0,7);
-  $('date').value = localDate;
-  $('filterMonth').value = localMonth;
-  $('period').value = today.getDate() <= 15 ? '1' : '2';
-
-  const categories = {
+  'use strict';
+  const STORE_KEY='miDinero.v2.encrypted';
+  const LEGACY_KEY='miDinero.v1.movements';
+  const ITERATIONS=310000;
+  const LOCK_AFTER_MS=5*60*1000;
+  const $=id=>document.getElementById(id);
+  const money=n=>new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN'}).format(Number(n)||0);
+  const enc=new TextEncoder(), dec=new TextDecoder();
+  let movements=[], cryptoKey=null, envelope=null, idleTimer=null, mode='unlock';
+  const today=new Date();
+  const localDate=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  const localMonth=localDate.slice(0,7);
+  $('date').value=localDate; $('filterMonth').value=localMonth; $('period').value=today.getDate()<=15?'1':'2';
+  const categories={
     expense:['Comida','Súper y despensa','Gasolina','Transporte','Hogar y servicios','Salud','Belleza y cuidado personal','Ropa','Entretenimiento','Suscripciones','Deudas y tarjetas','Mascotas','Regalos','Viajes','Otros gastos'],
     income:['Sueldo / nómina','Horas extra','Vales de despensa','Reembolso','Intereses','Venta','Otros ingresos'],
     transfer:['Traspaso entre cuentas','Apartado de ahorro']
   };
-  function load() {
-    try { const data = JSON.parse(localStorage.getItem(KEY) || '[]'); return Array.isArray(data) ? data : []; }
-    catch { return []; }
+  function b64(bytes){return btoa(String.fromCharCode(...new Uint8Array(bytes)));}
+  function unb64(str){return Uint8Array.from(atob(str),c=>c.charCodeAt(0));}
+  function randomBytes(n){return crypto.getRandomValues(new Uint8Array(n));}
+  async function deriveKey(password,salt){
+    const material=await crypto.subtle.importKey('raw',enc.encode(password),'PBKDF2',false,['deriveKey']);
+    return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:ITERATIONS,hash:'SHA-256'},material,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
   }
-  let movements = load();
-  function save() { localStorage.setItem(KEY, JSON.stringify(movements)); render(); }
-  function updateCategories() {
-    const type = $('type').value;
-    $('category').innerHTML = categories[type].map(c=>`<option>${escapeHtml(c)}</option>`).join('');
+  async function encryptData(data,key=cryptoKey,saltB64=envelope?.salt){
+    const iv=randomBytes(12), salt=unb64(saltB64);
+    const cipher=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,enc.encode(JSON.stringify(data)));
+    return {app:'Mi Dinero',format:'encrypted-backup',version:2,kdf:'PBKDF2-SHA-256',iterations:ITERATIONS,cipher:'AES-256-GCM',salt:saltB64,iv:b64(iv),ciphertext:b64(cipher),updatedAt:new Date().toISOString()};
   }
-  function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-  function render() {
-    const monthMoves = movements.filter(m=>m.date && m.date.slice(0,7)===localMonth);
-    const income = monthMoves.filter(m=>m.type==='income').reduce((a,m)=>a+m.amount,0);
-    const expense = monthMoves.filter(m=>m.type==='expense').reduce((a,m)=>a+m.amount,0);
-    const allIncome = movements.filter(m=>m.type==='income').reduce((a,m)=>a+m.amount,0);
-    const allExpense = movements.filter(m=>m.type==='expense').reduce((a,m)=>a+m.amount,0);
-    $('balance').textContent = money(allIncome-allExpense);
-    $('income').textContent = money(income);
-    $('expenses').textContent = money(expense);
-    const type = $('filterType').value, month = $('filterMonth').value;
-    const filtered = movements.filter(m=>(type==='all'||m.type===type)&&(!month||m.date.startsWith(month))).sort((a,b)=>b.date.localeCompare(a.date)||b.createdAt-a.createdAt);
-    const list = $('movementList');
-    if (!filtered.length) { list.innerHTML = '<div class="empty">Todavía no hay movimientos para mostrar.<br>Registra el primero con ＋ Registrar.</div>'; return; }
-    list.innerHTML = filtered.map(m => {
-      const sign = m.type==='income'?'+':m.type==='expense'?'−':'↔';
-      const cls = m.type==='income'?'positive':m.type==='expense'?'negative':'';
-      const typ = m.type==='income'?'Ingreso':m.type==='expense'?'Gasto':'Traspaso';
-      return `<div class="item"><div style="min-width:0"><div class="itemtitle">${escapeHtml(m.description)}</div><div class="itemmeta">${escapeHtml(m.date)} · ${escapeHtml(m.category)} · ${escapeHtml(m.account)} · ${typ}</div></div><div style="text-align:right"><div class="itemamount ${cls}">${sign}${money(m.amount)}</div><button class="danger" style="padding:6px 9px;margin-top:5px;font-size:.75rem" data-delete="${m.id}">Eliminar</button></div></div>`;
-    }).join('');
-    list.querySelectorAll('[data-delete]').forEach(btn=>btn.addEventListener('click',()=>{
-      if(confirm('¿Eliminar este movimiento?')) { movements=movements.filter(m=>m.id!==btn.dataset.delete); save(); }
-    }));
+  async function decryptEnvelope(env,password){
+    if(!env||env.format!=='encrypted-backup'||env.version!==2||!env.salt||!env.iv||!env.ciphertext) throw new Error('No parece un respaldo cifrado de Mi Dinero.');
+    if(env.iterations!==ITERATIONS||env.kdf!=='PBKDF2-SHA-256') throw new Error('Versión de cifrado no compatible con esta app.');
+    const key=await deriveKey(password,unb64(env.salt));
+    const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(env.iv)},key,unb64(env.ciphertext));
+    const data=JSON.parse(dec.decode(plain));
+    if(!Array.isArray(data.movements)) throw new Error('El respaldo no contiene movimientos válidos.');
+    return {key,data};
   }
-  document.querySelectorAll('.tab').forEach(btn=>btn.addEventListener('click',()=>{
-    document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b===btn));
-    ['movements','add','backup'].forEach(v=>$('view-'+v).classList.toggle('hidden',v!==btn.dataset.tab));
-  }));
-  $('type').addEventListener('change', updateCategories);
-  $('filterType').addEventListener('change',render);
-  $('filterMonth').addEventListener('change',render);
-  $('movementForm').addEventListener('submit',e=>{
-    e.preventDefault();
-    const amount = Number($('amount').value);
-    if(!Number.isFinite(amount)||amount<=0) return alert('Escribe un monto válido mayor que cero.');
-    movements.push({
-      id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())+Math.random()),
-      type:$('type').value, amount:Math.round(amount*100)/100, date:$('date').value,
-      category:$('category').value, description:$('description').value.trim(),
-      account:$('account').value, period:$('period').value, notes:$('notes').value.trim(),
-      createdAt:Date.now()
-    });
-    save(); e.target.reset(); $('date').value=localDate; $('period').value=today.getDate()<=15?'1':'2'; updateCategories();
-    document.querySelector('[data-tab="movements"]').click();
-  });
-  $('exportBtn').addEventListener('click',()=>{
-    download('mi-dinero-respaldo-'+localDate+'.json',JSON.stringify({app:'Mi Dinero',version:1,exportedAt:new Date().toISOString(),movements},null,2),'application/json');
-  });
-  $('exportCsvBtn').addEventListener('click',()=>{
-    const rows=[['Fecha','Tipo','Monto MXN','Categoría','Descripción','Cuenta','Quincena','Notas'],...movements.map(m=>[m.date,m.type,m.amount,m.category,m.description,m.account,m.period==='1'?'Primera':'Segunda',m.notes||''])];
-    const csv=rows.map(row=>row.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');
-    download('mi-dinero-movimientos-'+localDate+'.csv','\ufeff'+csv,'text/csv;charset=utf-8');
-  });
-  function download(name,data,type) {
-    const blob=new Blob([data],{type}), url=URL.createObjectURL(blob), a=document.createElement('a');
-    a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+  function showGate(isSetup,msg=''){
+    mode=isSetup?'setup':'unlock'; $('gate').classList.remove('hidden'); $('appShell').classList.add('hidden');
+    $('gateIntro').textContent=isSetup?'Crea una contraseña para cifrar tus datos en este dispositivo.':'Escribe tu contraseña para desbloquear tus datos cifrados.';
+    $('confirmWrap').classList.toggle('hidden',!isSetup); $('password').value=''; $('passwordConfirm').value='';
+    $('gateSubmit').textContent=isSetup?'Crear contraseña y cifrar datos':'Desbloquear'; $('password').autocomplete=isSetup?'new-password':'current-password';
+    $('gateMessage').classList.toggle('hidden',!msg); $('gateMessage').textContent=msg; $('password').focus();
   }
-  $('importBtn').addEventListener('click',async()=>{
-    const file=$('importFile').files[0]; if(!file) return alert('Primero selecciona un archivo JSON.');
-    try {
-      const parsed=JSON.parse(await file.text());
-      const incoming=Array.isArray(parsed)?parsed:parsed.movements;
-      if(!Array.isArray(incoming)||!incoming.every(m=>m&&typeof m.amount==='number'&&m.date&&m.type)) throw new Error('Formato no válido');
-      if(!confirm('Importar reemplazará los movimientos actuales. Exporta un respaldo primero. ¿Continuar?')) return;
-      movements=incoming;save();alert('Respaldo importado.');
-    } catch { alert('No se pudo importar. Verifica que sea un respaldo JSON válido de Mi Dinero.'); }
-  });
-  $('clearBtn').addEventListener('click',()=>{
-    if(confirm('¿Seguro que quieres borrar TODOS los movimientos de este navegador? Esta acción no se puede deshacer.')) {
-      if(confirm('Última confirmación: ¿borrar todos los datos?')) { movements=[];save(); }
-    }
-  });
-  updateCategories(); render();
-  if('serviceWorker' in navigator && location.protocol.startsWith('http')) {
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));
+  function showError(msg){$('gateMessage').textContent=msg;$('gateMessage').classList.remove('hidden');}
+  async function persist(){
+    if(!cryptoKey||!envelope) throw new Error('La app está bloqueada. Desbloquéala para continuar.');
+    const next=await encryptData({movements},cryptoKey,envelope.salt);
+    localStorage.setItem(STORE_KEY,JSON.stringify(next)); envelope=next; render();
   }
+  async function initialize(){
+    if(!crypto?.subtle){showGate(true,'Este navegador no ofrece Web Crypto. Abre la app desde la dirección HTTPS oficial en Chrome actualizado.');$('gateSubmit').disabled=true;return;}
+    const saved=localStorage.getItem(STORE_KEY);
+    if(saved){try{envelope=JSON.parse(saved);showGate(false);}catch{showGate(false,'No se pudo leer el archivo cifrado guardado. No borres los datos; primero intenta importar un respaldo.');}}
+    else {showGate(true,localStorage.getItem(LEGACY_KEY)?'Se encontró el almacenamiento anterior. Al crear tu contraseña, intentaremos cifrar esos registros y después eliminar la copia sin cifrar.':'Primera configuración: crea una contraseña para cifrar tus datos.');}
+  }
+  $('gateForm').addEventListener('submit',async e=>{
+    e.preventDefault(); $('gateSubmit').disabled=true;
+    try{
+      const password=$('password').value;
+      if(password.length<12) throw new Error('Usa una contraseña o frase de al menos 12 caracteres.');
+      if(mode==='setup'){
+        if(password!==$('passwordConfirm').value) throw new Error('Las contraseñas no coinciden.');
+        const salt=randomBytes(16); cryptoKey=await deriveKey(password,salt); movements=[];
+        const legacy=localStorage.getItem(LEGACY_KEY);
+        if(legacy){try{const parsed=JSON.parse(legacy);if(Array.isArray(parsed)) movements=parsed;}catch{throw new Error('No pudimos leer los datos anteriores. No se borró nada.');}}
+        envelope={salt:b64(salt)};
+        const first=await encryptData({movements},cryptoKey,envelope.salt);
+        localStorage.setItem(STORE_KEY,JSON.stringify(first)); envelope=first;
+        if(legacy!==null) localStorage.removeItem(LEGACY_KEY);
+        unlockUi();
+      }else{
+        const raw=localStorage.getItem(STORE_KEY); if(!raw) throw new Error('No hay una bóveda cifrada en este navegador.');
+        const env=JSON.parse(raw); const opened=await decryptEnvelope(env,password);
+        envelope=env; cryptoKey=opened.key; movements=opened.data.movements; unlockUi();
+      }
+    }catch(err){showError(err?.name==='OperationError'?'Contraseña incorrecta o respaldo dañado. Vuelve a intentarlo.':(err.message||'No se pudo desbloquear.'));}
+    finally{$('gateSubmit').disabled=false;}
+  });
+  function unlockUi(){ $('gate').classList.add('hidden');$('appShell').classList.remove('hidden');updateCategories();render();resetIdle(); }
+  function lockUi(){
+    if(!cryptoKey)return; cryptoKey=null; envelope=null; movements=[]; clearTimeout(idleTimer);
+    $('appShell').classList.add('hidden'); showGate(false,'La app se bloqueó por seguridad. Desbloquéala para volver a ver tus datos.');
+  }
+  function resetIdle(){clearTimeout(idleTimer);if(cryptoKey) idleTimer=setTimeout(lockUi,LOCK_AFTER_MS);}
+  ['click','keydown','touchstart','pointerdown'].forEach(ev=>document.addEventListener(ev,()=>{if(cryptoKey)resetIdle();},{passive:true}));
+  $('lockBtn').addEventListener('click',lockUi);
+  function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+  function updateCategories(){const type=$('type').value;$('category').innerHTML=categories[type].map(c=>`<option>${escapeHtml(c)}</option>`).join('');}
+  function render(){
+    const monthMoves=movements.filter(m=>m.date&&m.date.slice(0,7)===localMonth);
+    const income=monthMoves.filter(m=>m.type==='income').reduce((a,m)=>a+m.amount,0), expense=monthMoves.filter(m=>m.type==='expense').reduce((a,m)=>a+m.amount,0);
+    const allIncome=movements.filter(m=>m.type==='income').reduce((a,m)=>a+m.amount,0), allExpense=movements.filter(m=>m.type==='expense').reduce((a,m)=>a+m.amount,0);
+    $('balance').textContent=money(allIncome-allExpense);$('income').textContent=money(income);$('expenses').textContent=money(expense);
+    const type=$('filterType').value,month=$('filterMonth').value;
+    const filtered=movements.filter(m=>(type==='all'||m.type===type)&&(!month||m.date.startsWith(month))).sort((a,b)=>b.date.localeCompare(a.date)||b.createdAt-a.createdAt);
+    const list=$('movementList');
+    if(!filtered.length){list.innerHTML='<div class="empty">Todavía no hay movimientos para mostrar.<br>Registra el primero con ＋ Registrar.</div>';return;}
+    list.innerHTML=filtered.map(m=>{const sign=m.type==='income'?'+':m.type==='expense'?'−':'↔',cls=m.type==='income'?'positive':m.type==='expense'?'negative':'',typ=m.type==='income'?'Ingreso':m.type==='expense'?'Gasto':'Traspaso';return `<div class="item"><div style="min-width:0"><div class="itemtitle">${escapeHtml(m.description)}</div><div class="itemmeta">${escapeHtml(m.date)} · ${escapeHtml(m.category)} · ${escapeHtml(m.account)} · ${typ}</div></div><div style="text-align:right"><div class="itemamount ${cls}">${sign}${money(m.amount)}</div><button class="danger" style="padding:6px 9px;margin-top:5px;font-size:.75rem" data-delete="${escapeHtml(m.id)}">Eliminar</button></div></div>`;}).join('');
+    list.querySelectorAll('[data-delete]').forEach(btn=>btn.addEventListener('click',async()=>{if(confirm('¿Eliminar este movimiento?')){movements=movements.filter(m=>m.id!==btn.dataset.delete);await safePersist();}}));
+  }
+  async function safePersist(){try{await persist();}catch(e){alert('No se pudo guardar el cambio. Mantén la app abierta e inténtalo de nuevo. '+(e.message||''));}}
+  document.querySelectorAll('.tab').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b===btn));['movements','add','backup'].forEach(v=>$('view-'+v).classList.toggle('hidden',v!==btn.dataset.tab));}));
+  $('type').addEventListener('change',updateCategories);$('filterType').addEventListener('change',render);$('filterMonth').addEventListener('change',render);
+  $('movementForm').addEventListener('submit',async e=>{e.preventDefault();const amount=Number($('amount').value);if(!Number.isFinite(amount)||amount<=0)return alert('Escribe un monto válido mayor que cero.');movements.push({id:(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random()),type:$('type').value,amount:Math.round(amount*100)/100,date:$('date').value,category:$('category').value,description:$('description').value.trim(),account:$('account').value,period:$('period').value,notes:$('notes').value.trim(),createdAt:Date.now()});await safePersist();e.target.reset();$('date').value=localDate;$('period').value=today.getDate()<=15?'1':'2';updateCategories();document.querySelector('[data-tab="movements"]').click();});
+  function download(name,data,type){const blob=new Blob([data],{type}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+  $('exportBtn').addEventListener('click',()=>{if(!envelope)return alert('Desbloquea la app primero.');download('mi-dinero-respaldo-cifrado-'+localDate+'.json',JSON.stringify(envelope,null,2),'application/json');alert('Respaldo cifrado exportado. Para restaurarlo necesitas la contraseña de Mi Dinero. Guárdalo en un lugar privado.');});
+  $('exportCsvBtn').addEventListener('click',()=>{if(!confirm('El CSV se guarda SIN cifrar y cualquiera que lo abra podrá leer tus movimientos. ¿Quieres exportarlo de todos modos?'))return;const rows=[['Fecha','Tipo','Monto MXN','Categoría','Descripción','Cuenta','Quincena','Notas'],...movements.map(m=>[m.date,m.type,m.amount,m.category,m.description,m.account,m.period==='1'?'Primera':'Segunda',m.notes||''])];const csv=rows.map(row=>row.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');download('mi-dinero-movimientos-'+localDate+'.csv','\ufeff'+csv,'text/csv;charset=utf-8');});
+  $('importBtn').addEventListener('click',async()=>{const file=$('importFile').files[0];if(!file)return alert('Primero selecciona un respaldo JSON cifrado.');const password=prompt('Escribe la contraseña con la que se creó ese respaldo.');if(password===null)return;try{const parsed=JSON.parse(await file.text());const opened=await decryptEnvelope(parsed,password);if(!confirm('Importar reemplazará los movimientos actuales. Exporta un respaldo actual primero. ¿Continuar?'))return;cryptoKey=opened.key;movements=opened.data.movements;envelope=parsed;localStorage.setItem(STORE_KEY,JSON.stringify(parsed));render();alert('Respaldo cifrado importado correctamente.');}catch(err){alert(err?.name==='OperationError'?'Contraseña incorrecta o respaldo dañado. No se modificaron tus datos.':(err.message||'No se pudo importar.'));}});
+  $('clearBtn').addEventListener('click',async()=>{if(confirm('¿Seguro que quieres borrar TODOS los movimientos de este navegador? Esta acción no se puede deshacer.')){if(confirm('Última confirmación: ¿borrar todos los datos?')){movements=[];await safePersist();}}});
+  initialize();
+  if('serviceWorker' in navigator && location.protocol.startsWith('http'))window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));
 })();
 </script>
 </body>
