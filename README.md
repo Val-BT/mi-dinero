@@ -1,31 +1,27 @@
-# Mi Dinero — versión 3 (cifrado local)
+# Mi Dinero — versión 6 consolidada
 
-Aplicación web instalable para llevar un registro manual de finanzas personales en MXN.
+App web progresiva estática para registro personal de movimientos.
+
+## Publicar en GitHub Pages
+1. Descarga y descomprime este ZIP.
+2. Sube los archivos que están dentro de `mi_dinero_app` a la raíz del repositorio (reemplazando `index.html`, `manifest.json` y `service-worker.js`).
+3. Conserva el repositorio público solo si aceptas que el código sea público. Los datos no se incluyen en el repositorio: se cifran en el almacenamiento local del navegador.
+4. Espera a que GitHub Pages termine de publicar y abre la URL HTTPS.
 
 ## Funciones
-- Registro de ingresos, gastos y traspasos.
-- Filtros por tipo y mes.
-- Resumen de ingresos/gastos por mes y por quincena.
-- Planeación de quincena: ingreso esperado, gastos fijos, pagos de deuda y ahorro previsto.
-- Registro manual de deudas/tarjetas, saldo, pago habitual y fecha límite.
-- Apartados y metas de ahorro con barra de progreso.
-- Exportación de respaldo JSON cifrado e importación con la contraseña.
-- Exportación CSV opcional sin cifrar (contiene datos legibles).
-- Cifrado local AES-256-GCM y bloqueo automático tras 5 minutos de inactividad.
+- Cifrado local AES-256-GCM con contraseña y PBKDF2; bloqueo automático tras 5 minutos de inactividad.
+- Resumen mensual de ingresos y gastos.
+- Cuentas/tarjetas creadas por la usuaria, saldos iniciales y saldos derivados de movimientos.
+- Registro de ingresos, gastos y transferencias entre cuentas.
+- Apartados Stori personalizados con movimientos fechados.
+- Categorías de ingresos y gastos personalizables.
+- Reportes por categoría y comparación de hasta seis meses.
+- Exportación de respaldo cifrado e importación; CSV opcional sin cifrar.
+- Vales de despensa creados con saldo inicial de $0.00. Cuentas predefinidas empiezan en $0.00.
 
-## Actualizar GitHub Pages desde el celular
-1. Abre el repositorio `Val-BT/mi-dinero` en GitHub.
-2. En Código, elige Add file → Upload files (Agregar archivo → Cargar archivos).
-3. Descomprime este ZIP en tu celular y carga los cuatro archivos de la carpeta `mi_dinero_app` a la raíz del repositorio: `index.html`, `manifest.json`, `README.md` y `service-worker.js`.
-4. Asegúrate de que la opción sea confirmar directamente en la rama predeterminada y confirma los cambios.
-5. Espera a que la acción `pages build and deployment` termine en verde. Después abre `https://val-bt.github.io/mi-dinero/` y recarga; si la versión vieja queda en caché, cierra las pestañas de la app y vuelve a abrirla.
-
-## Seguridad y límites
-- Los datos se cifran en el navegador antes de guardarse en el almacenamiento local. No hay servidor de datos ni sincronización automática entre celular y computadora.
-- La contraseña no se almacena; si se pierde, no se pueden descifrar los datos sin una copia y contraseña válidas.
-- Guarda copias de respaldo cifradas en un lugar privado y prueba la restauración periódicamente.
-- El CSV NO está cifrado. No lo compartas sin revisar su contenido.
-- El repositorio y el código de la aplicación son públicos. No subas respaldos, movimientos ni datos personales al repositorio.
-- No registres contraseñas bancarias, NIP, CVV ni números completos de tarjetas.
-- Esta es una herramienta personal inicial, no una aplicación auditada profesionalmente. Mantén el teléfono actualizado y protegido con bloqueo de pantalla.
-- Los saldos de deudas y apartados son manuales: no se conectan con bancos ni representan transferencias reales.
+## Límites importantes
+- No se conecta a bancos, no verifica saldos reales ni sincroniza automáticamente entre dispositivos.
+- Los datos permanecen en ese navegador/dispositivo; borrar almacenamiento del navegador puede perderlos. Exporta respaldos cifrados con regularidad y guarda la contraseña aparte.
+- La exportación CSV no está cifrada.
+- Esta app no ha sido auditada por un especialista en seguridad; prueba con datos ficticios antes de usar información financiera real.
+- Las cuentas de crédito se muestran separadas del dinero disponible. Registra compras en tarjeta como gastos asociados a la tarjeta y pagos de tarjeta como transferencias desde una cuenta hacia la tarjeta.
