@@ -1,18 +1,31 @@
-# Mi Dinero — versión con cifrado local
+# Mi Dinero — versión 3 (cifrado local)
 
-Aplicación web estática para registrar movimientos financieros manualmente.
+Aplicación web instalable para llevar un registro manual de finanzas personales en MXN.
 
-## Seguridad de esta versión
-- Los movimientos se cifran en el navegador antes de guardarse usando AES-256-GCM.
-- La clave se deriva de una contraseña mediante PBKDF2-SHA-256 (310,000 iteraciones) y una sal aleatoria.
-- La contraseña no se guarda. La app se bloquea automáticamente tras 5 minutos de inactividad.
-- Los respaldos JSON exportados contienen solo el sobre cifrado; necesitan la misma contraseña para restaurarse.
-- Los CSV son texto legible sin cifrar y la app muestra una advertencia antes de exportarlos.
-- No hay servidor ni sincronización en la nube. Para usar en otro dispositivo, hay que trasladar el respaldo cifrado y conocer la contraseña.
-- Si se olvida la contraseña y no hay una sesión desbloqueada, los datos no se pueden recuperar.
+## Funciones
+- Registro de ingresos, gastos y traspasos.
+- Filtros por tipo y mes.
+- Resumen de ingresos/gastos por mes y por quincena.
+- Planeación de quincena: ingreso esperado, gastos fijos, pagos de deuda y ahorro previsto.
+- Registro manual de deudas/tarjetas, saldo, pago habitual y fecha límite.
+- Apartados y metas de ahorro con barra de progreso.
+- Exportación de respaldo JSON cifrado e importación con la contraseña.
+- Exportación CSV opcional sin cifrar (contiene datos legibles).
+- Cifrado local AES-256-GCM y bloqueo automático tras 5 minutos de inactividad.
 
-## Límites importantes
-Es una implementación inicial y no una auditoría de seguridad profesional. El código de la app se publica en GitHub Pages. Mientras está desbloqueada, un navegador o una versión de la app comprometidos podrían acceder a los datos en memoria. Usa bloqueo de pantalla en el dispositivo, contraseña única, copias cifradas y mantén el navegador actualizado. No guardes NIP, CVV, contraseñas bancarias ni números completos de tarjetas.
+## Actualizar GitHub Pages desde el celular
+1. Abre el repositorio `Val-BT/mi-dinero` en GitHub.
+2. En Código, elige Add file → Upload files (Agregar archivo → Cargar archivos).
+3. Descomprime este ZIP en tu celular y carga los cuatro archivos de la carpeta `mi_dinero_app` a la raíz del repositorio: `index.html`, `manifest.json`, `README.md` y `service-worker.js`.
+4. Asegúrate de que la opción sea confirmar directamente en la rama predeterminada y confirma los cambios.
+5. Espera a que la acción `pages build and deployment` termine en verde. Después abre `https://val-bt.github.io/mi-dinero/` y recarga; si la versión vieja queda en caché, cierra las pestañas de la app y vuelve a abrirla.
 
-## Publicación
-Sube `index.html`, `manifest.json`, `service-worker.js` y `README.md` a la raíz del repositorio de GitHub Pages, reemplazando los archivos existentes. No subas respaldos financieros al repositorio.
+## Seguridad y límites
+- Los datos se cifran en el navegador antes de guardarse en el almacenamiento local. No hay servidor de datos ni sincronización automática entre celular y computadora.
+- La contraseña no se almacena; si se pierde, no se pueden descifrar los datos sin una copia y contraseña válidas.
+- Guarda copias de respaldo cifradas en un lugar privado y prueba la restauración periódicamente.
+- El CSV NO está cifrado. No lo compartas sin revisar su contenido.
+- El repositorio y el código de la aplicación son públicos. No subas respaldos, movimientos ni datos personales al repositorio.
+- No registres contraseñas bancarias, NIP, CVV ni números completos de tarjetas.
+- Esta es una herramienta personal inicial, no una aplicación auditada profesionalmente. Mantén el teléfono actualizado y protegido con bloqueo de pantalla.
+- Los saldos de deudas y apartados son manuales: no se conectan con bancos ni representan transferencias reales.

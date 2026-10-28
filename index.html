@@ -52,6 +52,9 @@
     .gatecard h1 { margin-top:0; } .gatecard .field { margin-top:12px; }
     .gatecard button { width:100%; margin-top:14px; }
     .securitynote { font-size:.82rem; color:var(--muted); margin-top:14px; }
+    .metricgrid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .pill { display:inline-block; padding:3px 8px; border-radius:99px; background:var(--accent2); color:var(--accent); font-size:.76rem; font-weight:700; }
+    .progress { height:8px; border-radius:99px; background:#eee7ef; overflow:hidden; margin-top:8px; } .progress > span { display:block; height:100%; background:var(--accent); width:0; }
     .securitybar { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:10px 0; }
     .securitybar button { font-size:.8rem; padding:8px 10px; }
     .notice.dangertext { background:#fff0f2; border-color:#f2cdd3; color:#8a2635; }
@@ -102,6 +105,9 @@
   <nav class="tabs" aria-label="Secciones">
     <button class="tab active" data-tab="movements">Movimientos</button>
     <button class="tab" data-tab="add">＋ Registrar</button>
+    <button class="tab" data-tab="quincenas">Quincenas</button>
+    <button class="tab" data-tab="debts">Deudas y tarjetas</button>
+    <button class="tab" data-tab="pockets">Apartados y metas</button>
     <button class="tab" data-tab="backup">Respaldo</button>
   </nav>
 
@@ -168,6 +174,64 @@
     </form>
   </section>
 
+  <section id="view-quincenas" class="card hidden">
+    <h2>Resumen por quincena</h2>
+    <p class="hint">Selecciona el periodo para ver ingresos, gastos y diferencia de tus movimientos registrados.</p>
+    <div class="formgrid">
+      <div class="field"><label for="periodMonth">Mes</label><input id="periodMonth" type="month"></div>
+      <div class="field"><label for="periodPick">Quincena</label><select id="periodPick"><option value="1">Primera (1–15)</option><option value="2">Segunda (16–fin de mes)</option></select></div>
+    </div>
+    <div class="metricgrid" style="margin-top:12px">
+      <div class="card"><div class="label">Ingresos</div><div class="amount positive" id="periodIncome">$0.00</div></div>
+      <div class="card"><div class="label">Gastos</div><div class="amount negative" id="periodExpenses">$0.00</div></div>
+      <div class="card wide"><div class="label">Diferencia registrada</div><div class="amount" id="periodNet">$0.00</div></div>
+    </div>
+    <h2 style="margin-top:18px">Distribución de la quincena</h2>
+    <form id="planForm">
+      <div class="formgrid">
+        <div class="field"><label for="planIncome">Ingreso esperado (MXN)</label><input id="planIncome" type="number" min="0" step="0.01" placeholder="0.00"></div>
+        <div class="field"><label for="planFixed">Gastos fijos (MXN)</label><input id="planFixed" type="number" min="0" step="0.01" placeholder="0.00"></div>
+        <div class="field"><label for="planDebt">Pagos de deudas (MXN)</label><input id="planDebt" type="number" min="0" step="0.01" placeholder="0.00"></div>
+        <div class="field"><label for="planSavings">Ahorro/apartados (MXN)</label><input id="planSavings" type="number" min="0" step="0.01" placeholder="0.00"></div>
+      </div>
+      <div class="actions"><button class="primary" type="submit">Guardar plan de quincena</button></div>
+      <p class="hint" id="planResult">Completa tu plan para calcular lo que quedaría disponible. El plan no modifica los movimientos ni saldos reales.</p>
+    </form>
+  </section>
+
+  <section id="view-debts" class="card hidden">
+    <h2>Deudas y tarjetas</h2>
+    <p class="hint">Registra saldos manualmente; no se conecta a bancos ni calcula intereses automáticamente.</p>
+    <form id="debtForm">
+      <div class="formgrid">
+        <div class="field"><label for="debtName">Nombre</label><input id="debtName" maxlength="60" required placeholder="Ej. préstamo BBVA"></div>
+        <div class="field"><label for="debtKind">Tipo</label><select id="debtKind"><option>Préstamo</option><option>Tarjeta de crédito</option><option>Préstamo familiar</option><option>Otro</option></select></div>
+        <div class="field"><label for="debtBalance">Saldo pendiente (MXN)</label><input id="debtBalance" type="number" min="0" step="0.01" required placeholder="0.00"></div>
+        <div class="field"><label for="debtPayment">Pago habitual (MXN)</label><input id="debtPayment" type="number" min="0" step="0.01" placeholder="0.00"></div>
+        <div class="field"><label for="debtDue">Fecha límite (opcional)</label><input id="debtDue" type="date"></div>
+        <div class="field"><label for="debtNotes">Notas (opcional)</label><input id="debtNotes" maxlength="120" placeholder="Tasa, pago mínimo, etc."></div>
+      </div>
+      <div class="actions"><button class="primary" type="submit">Guardar deuda</button></div>
+    </form>
+    <div id="debtList" class="list" style="margin-top:14px"></div>
+  </section>
+
+  <section id="view-pockets" class="card hidden">
+    <h2>Apartados y metas</h2>
+    <p class="hint">Saldos manuales para representar tus apartados de ahorro. Actualiza el monto cuando muevas dinero en tu banco; esto no transfiere dinero real.</p>
+    <form id="pocketForm">
+      <div class="formgrid">
+        <div class="field"><label for="pocketName">Nombre del apartado o meta</label><input id="pocketName" maxlength="60" required placeholder="Ej. Fondo de emergencia"></div>
+        <div class="field"><label for="pocketBalance">Saldo actual (MXN)</label><input id="pocketBalance" type="number" min="0" step="0.01" required placeholder="0.00"></div>
+        <div class="field"><label for="pocketGoal">Meta (MXN, opcional)</label><input id="pocketGoal" type="number" min="0" step="0.01" placeholder="0.00"></div>
+        <div class="field"><label for="pocketDate">Fecha objetivo (opcional)</label><input id="pocketDate" type="date"></div>
+      </div>
+      <div class="actions"><button class="primary" type="submit">Guardar apartado</button></div>
+    </form>
+    <div id="pocketList" class="list" style="margin-top:14px"></div>
+    <div class="card" style="margin-top:14px"><div class="label">Total en apartados registrados</div><div class="amount" id="pocketTotal">$0.00</div></div>
+  </section>
+
   <section id="view-backup" class="card hidden">
     <h2>Respaldo y privacidad</h2>
     <p>Los movimientos se cifran en este dispositivo con AES-GCM. El código de la app es público, pero no contiene tus movimientos. No hay sincronización entre dispositivos; para pasar datos a otro equipo usa el respaldo cifrado.</p>
@@ -196,7 +260,7 @@
   const $=id=>document.getElementById(id);
   const money=n=>new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN'}).format(Number(n)||0);
   const enc=new TextEncoder(), dec=new TextDecoder();
-  let movements=[], cryptoKey=null, envelope=null, idleTimer=null, mode='unlock';
+  let movements=[], debts=[], pockets=[], plans={}, cryptoKey=null, envelope=null, idleTimer=null, mode='unlock';
   const today=new Date();
   const localDate=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
   const localMonth=localDate.slice(0,7);
@@ -237,7 +301,7 @@
   function showError(msg){$('gateMessage').textContent=msg;$('gateMessage').classList.remove('hidden');}
   async function persist(){
     if(!cryptoKey||!envelope) throw new Error('La app está bloqueada. Desbloquéala para continuar.');
-    const next=await encryptData({movements},cryptoKey,envelope.salt);
+    const next=await encryptData({movements,debts,pockets,plans},cryptoKey,envelope.salt);
     localStorage.setItem(STORE_KEY,JSON.stringify(next)); envelope=next; render();
   }
   async function initialize(){
@@ -257,21 +321,22 @@
         const legacy=localStorage.getItem(LEGACY_KEY);
         if(legacy){try{const parsed=JSON.parse(legacy);if(Array.isArray(parsed)) movements=parsed;}catch{throw new Error('No pudimos leer los datos anteriores. No se borró nada.');}}
         envelope={salt:b64(salt)};
-        const first=await encryptData({movements},cryptoKey,envelope.salt);
+        debts=[]; pockets=[]; plans={};
+        const first=await encryptData({movements,debts,pockets,plans},cryptoKey,envelope.salt);
         localStorage.setItem(STORE_KEY,JSON.stringify(first)); envelope=first;
         if(legacy!==null) localStorage.removeItem(LEGACY_KEY);
         unlockUi();
       }else{
         const raw=localStorage.getItem(STORE_KEY); if(!raw) throw new Error('No hay una bóveda cifrada en este navegador.');
         const env=JSON.parse(raw); const opened=await decryptEnvelope(env,password);
-        envelope=env; cryptoKey=opened.key; movements=opened.data.movements; unlockUi();
+        envelope=env; cryptoKey=opened.key; movements=opened.data.movements; debts=Array.isArray(opened.data.debts)?opened.data.debts:[]; pockets=Array.isArray(opened.data.pockets)?opened.data.pockets:[]; plans=opened.data.plans&&typeof opened.data.plans==='object'?opened.data.plans:{}; unlockUi();
       }
     }catch(err){showError(err?.name==='OperationError'?'Contraseña incorrecta o respaldo dañado. Vuelve a intentarlo.':(err.message||'No se pudo desbloquear.'));}
     finally{$('gateSubmit').disabled=false;}
   });
-  function unlockUi(){ $('gate').classList.add('hidden');$('appShell').classList.remove('hidden');updateCategories();render();resetIdle(); }
+  function unlockUi(){ $('gate').classList.add('hidden');$('appShell').classList.remove('hidden');updateCategories();render();renderExtras();resetIdle(); }
   function lockUi(){
-    if(!cryptoKey)return; cryptoKey=null; envelope=null; movements=[]; clearTimeout(idleTimer);
+    if(!cryptoKey)return; cryptoKey=null; envelope=null; movements=[]; debts=[]; pockets=[]; plans={}; clearTimeout(idleTimer);
     $('appShell').classList.add('hidden'); showGate(false,'La app se bloqueó por seguridad. Desbloquéala para volver a ver tus datos.');
   }
   function resetIdle(){clearTimeout(idleTimer);if(cryptoKey) idleTimer=setTimeout(lockUi,LOCK_AFTER_MS);}
@@ -283,7 +348,7 @@
     const monthMoves=movements.filter(m=>m.date&&m.date.slice(0,7)===localMonth);
     const income=monthMoves.filter(m=>m.type==='income').reduce((a,m)=>a+m.amount,0), expense=monthMoves.filter(m=>m.type==='expense').reduce((a,m)=>a+m.amount,0);
     const allIncome=movements.filter(m=>m.type==='income').reduce((a,m)=>a+m.amount,0), allExpense=movements.filter(m=>m.type==='expense').reduce((a,m)=>a+m.amount,0);
-    $('balance').textContent=money(allIncome-allExpense);$('income').textContent=money(income);$('expenses').textContent=money(expense);
+    $('balance').textContent=money(allIncome-allExpense);$('income').textContent=money(income);$('expenses').textContent=money(expense);if($('periodIncome'))renderExtras();
     const type=$('filterType').value,month=$('filterMonth').value;
     const filtered=movements.filter(m=>(type==='all'||m.type===type)&&(!month||m.date.startsWith(month))).sort((a,b)=>b.date.localeCompare(a.date)||b.createdAt-a.createdAt);
     const list=$('movementList');
@@ -292,14 +357,39 @@
     list.querySelectorAll('[data-delete]').forEach(btn=>btn.addEventListener('click',async()=>{if(confirm('¿Eliminar este movimiento?')){movements=movements.filter(m=>m.id!==btn.dataset.delete);await safePersist();}}));
   }
   async function safePersist(){try{await persist();}catch(e){alert('No se pudo guardar el cambio. Mantén la app abierta e inténtalo de nuevo. '+(e.message||''));}}
-  document.querySelectorAll('.tab').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b===btn));['movements','add','backup'].forEach(v=>$('view-'+v).classList.toggle('hidden',v!==btn.dataset.tab));}));
+  document.querySelectorAll('.tab').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b===btn));['movements','add','quincenas','debts','pockets','backup'].forEach(v=>$('view-'+v).classList.toggle('hidden',v!==btn.dataset.tab));}));
   $('type').addEventListener('change',updateCategories);$('filterType').addEventListener('change',render);$('filterMonth').addEventListener('change',render);
   $('movementForm').addEventListener('submit',async e=>{e.preventDefault();const amount=Number($('amount').value);if(!Number.isFinite(amount)||amount<=0)return alert('Escribe un monto válido mayor que cero.');movements.push({id:(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random()),type:$('type').value,amount:Math.round(amount*100)/100,date:$('date').value,category:$('category').value,description:$('description').value.trim(),account:$('account').value,period:$('period').value,notes:$('notes').value.trim(),createdAt:Date.now()});await safePersist();e.target.reset();$('date').value=localDate;$('period').value=today.getDate()<=15?'1':'2';updateCategories();document.querySelector('[data-tab="movements"]').click();});
   function download(name,data,type){const blob=new Blob([data],{type}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
   $('exportBtn').addEventListener('click',()=>{if(!envelope)return alert('Desbloquea la app primero.');download('mi-dinero-respaldo-cifrado-'+localDate+'.json',JSON.stringify(envelope,null,2),'application/json');alert('Respaldo cifrado exportado. Para restaurarlo necesitas la contraseña de Mi Dinero. Guárdalo en un lugar privado.');});
   $('exportCsvBtn').addEventListener('click',()=>{if(!confirm('El CSV se guarda SIN cifrar y cualquiera que lo abra podrá leer tus movimientos. ¿Quieres exportarlo de todos modos?'))return;const rows=[['Fecha','Tipo','Monto MXN','Categoría','Descripción','Cuenta','Quincena','Notas'],...movements.map(m=>[m.date,m.type,m.amount,m.category,m.description,m.account,m.period==='1'?'Primera':'Segunda',m.notes||''])];const csv=rows.map(row=>row.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');download('mi-dinero-movimientos-'+localDate+'.csv','\ufeff'+csv,'text/csv;charset=utf-8');});
-  $('importBtn').addEventListener('click',async()=>{const file=$('importFile').files[0];if(!file)return alert('Primero selecciona un respaldo JSON cifrado.');const password=prompt('Escribe la contraseña con la que se creó ese respaldo.');if(password===null)return;try{const parsed=JSON.parse(await file.text());const opened=await decryptEnvelope(parsed,password);if(!confirm('Importar reemplazará los movimientos actuales. Exporta un respaldo actual primero. ¿Continuar?'))return;cryptoKey=opened.key;movements=opened.data.movements;envelope=parsed;localStorage.setItem(STORE_KEY,JSON.stringify(parsed));render();alert('Respaldo cifrado importado correctamente.');}catch(err){alert(err?.name==='OperationError'?'Contraseña incorrecta o respaldo dañado. No se modificaron tus datos.':(err.message||'No se pudo importar.'));}});
-  $('clearBtn').addEventListener('click',async()=>{if(confirm('¿Seguro que quieres borrar TODOS los movimientos de este navegador? Esta acción no se puede deshacer.')){if(confirm('Última confirmación: ¿borrar todos los datos?')){movements=[];await safePersist();}}});
+  $('importBtn').addEventListener('click',async()=>{const file=$('importFile').files[0];if(!file)return alert('Primero selecciona un respaldo JSON cifrado.');const password=prompt('Escribe la contraseña con la que se creó ese respaldo.');if(password===null)return;try{const parsed=JSON.parse(await file.text());const opened=await decryptEnvelope(parsed,password);if(!confirm('Importar reemplazará los movimientos actuales. Exporta un respaldo actual primero. ¿Continuar?'))return;cryptoKey=opened.key;movements=opened.data.movements;debts=Array.isArray(opened.data.debts)?opened.data.debts:[];pockets=Array.isArray(opened.data.pockets)?opened.data.pockets:[];plans=opened.data.plans&&typeof opened.data.plans==='object'?opened.data.plans:{};envelope=parsed;await persist();render();renderExtras();alert('Respaldo cifrado importado correctamente.');}catch(err){alert(err?.name==='OperationError'?'Contraseña incorrecta o respaldo dañado. No se modificaron tus datos.':(err.message||'No se pudo importar.'));}});
+  $('clearBtn').addEventListener('click',async()=>{if(confirm('¿Seguro que quieres borrar TODOS los movimientos de este navegador? Esta acción no se puede deshacer.')){if(confirm('Última confirmación: ¿borrar todos los datos?')){movements=[];debts=[];pockets=[];plans={};await safePersist();}}});
+
+  function selectedPlanKey(){return `${$('periodMonth').value||localMonth}-${$('periodPick').value}`;}
+  function renderExtras(){
+    const month=$('periodMonth').value||localMonth, period=$('periodPick').value||'1';
+    const subset=movements.filter(m=>m.date&&m.date.startsWith(month)&&(period==='1'?Number(m.date.slice(8,10))<=15:Number(m.date.slice(8,10))>=16));
+    const inc=subset.filter(m=>m.type==='income').reduce((a,m)=>a+m.amount,0), exp=subset.filter(m=>m.type==='expense').reduce((a,m)=>a+m.amount,0);
+    $('periodIncome').textContent=money(inc);$('periodExpenses').textContent=money(exp);$('periodNet').textContent=money(inc-exp);$('periodNet').className='amount '+(inc-exp>=0?'positive':'negative');
+    const plan=plans[selectedPlanKey()]||{};['Income','Fixed','Debt','Savings'].forEach(k=>{const el=$('plan'+k);if(el&&document.activeElement!==el)el.value=plan[k.toLowerCase()]??'';});
+    const planned=Number(plan.income||0)-Number(plan.fixed||0)-Number(plan.debt||0)-Number(plan.savings||0);
+    $('planResult').textContent=plan.income!==undefined?`Disponible estimado después de lo planeado: ${money(planned)}. Esto es una planeación, no un saldo bancario.`:'Completa tu plan para calcular lo que quedaría disponible. El plan no modifica los movimientos ni saldos reales.';
+    const dl=$('debtList');
+    if(!debts.length)dl.innerHTML='<div class="empty">Todavía no hay deudas registradas.</div>';
+    else dl.innerHTML=debts.map(d=>`<div class="item"><div style="min-width:0"><div class="itemtitle">${escapeHtml(d.name)} <span class="pill">${escapeHtml(d.kind)}</span></div><div class="itemmeta">Pago habitual: ${money(d.payment||0)}${d.due?' · Límite: '+escapeHtml(d.due):''}${d.notes?' · '+escapeHtml(d.notes):''}</div></div><div style="text-align:right"><div class="itemamount negative">${money(d.balance)}</div><button class="danger" style="padding:6px 9px;margin-top:5px;font-size:.75rem" data-debt-delete="${escapeHtml(d.id)}">Eliminar</button></div></div>`).join('');
+    dl.querySelectorAll('[data-debt-delete]').forEach(b=>b.addEventListener('click',async()=>{if(confirm('¿Eliminar esta deuda del registro?')){debts=debts.filter(d=>d.id!==b.dataset.debtDelete);await safePersist();}}));
+    const pl=$('pocketList');
+    if(!pockets.length)pl.innerHTML='<div class="empty">Todavía no hay apartados o metas registrados.</div>';
+    else pl.innerHTML=pockets.map(q=>{const pct=q.goal>0?Math.min(100,Math.round(q.balance/q.goal*100)):0;return `<div class="item"><div style="min-width:0;flex:1"><div class="itemtitle">${escapeHtml(q.name)}</div><div class="itemmeta">${q.goal>0?`${money(q.balance)} de ${money(q.goal)} · ${pct}%${q.date?' · Fecha objetivo '+escapeHtml(q.date):''}`:'Sin meta definida'}</div>${q.goal>0?`<div class="progress"><span style="width:${pct}%"></span></div>`:''}</div><div style="text-align:right"><div class="itemamount">${money(q.balance)}</div><button class="danger" style="padding:6px 9px;margin-top:5px;font-size:.75rem" data-pocket-delete="${escapeHtml(q.id)}">Eliminar</button></div></div>`}).join('');
+    pl.querySelectorAll('[data-pocket-delete]').forEach(b=>b.addEventListener('click',async()=>{if(confirm('¿Eliminar este apartado del registro?')){pockets=pockets.filter(q=>q.id!==b.dataset.pocketDelete);await safePersist();}}));
+    $('pocketTotal').textContent=money(pockets.reduce((a,q)=>a+Number(q.balance||0),0));
+  }
+  $('periodMonth').value=localMonth;
+  $('periodMonth').addEventListener('change',renderExtras);$('periodPick').addEventListener('change',renderExtras);
+  $('planForm').addEventListener('submit',async e=>{e.preventDefault();plans[selectedPlanKey()]={income:Number($('planIncome').value||0),fixed:Number($('planFixed').value||0),debt:Number($('planDebt').value||0),savings:Number($('planSavings').value||0)};await safePersist();renderExtras();alert('Plan de quincena guardado.');});
+  $('debtForm').addEventListener('submit',async e=>{e.preventDefault();debts.push({id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),name:$('debtName').value.trim(),kind:$('debtKind').value,balance:Number($('debtBalance').value),payment:Number($('debtPayment').value||0),due:$('debtDue').value,notes:$('debtNotes').value.trim()});await safePersist();e.target.reset();renderExtras();alert('Deuda guardada.');});
+  $('pocketForm').addEventListener('submit',async e=>{e.preventDefault();pockets.push({id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),name:$('pocketName').value.trim(),balance:Number($('pocketBalance').value),goal:Number($('pocketGoal').value||0),date:$('pocketDate').value});await safePersist();e.target.reset();renderExtras();alert('Apartado guardado.');});
   initialize();
   if('serviceWorker' in navigator && location.protocol.startsWith('http'))window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));
 })();

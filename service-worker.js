@@ -1,4 +1,4 @@
-const CACHE = 'mi-dinero-v2-encrypted';
+const CACHE = 'mi-dinero-v3-finanzas';
 const FILES = ['./', './index.html', './manifest.json'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(FILES)).then(() => self.skipWaiting()));
