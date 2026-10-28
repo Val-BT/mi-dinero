@@ -1,4 +1,4 @@
-# Mi Dinero — versión 6 consolidada
+# Mi Dinero — versión 7 consolidada
 
 App web progresiva estática para registro personal de movimientos.
 
@@ -25,3 +25,12 @@ App web progresiva estática para registro personal de movimientos.
 - La exportación CSV no está cifrada.
 - Esta app no ha sido auditada por un especialista en seguridad; prueba con datos ficticios antes de usar información financiera real.
 - Las cuentas de crédito se muestran separadas del dinero disponible. Registra compras en tarjeta como gastos asociados a la tarjeta y pagos de tarjeta como transferencias desde una cuenta hacia la tarjeta.
+
+
+## Novedades de la versión 7
+- Historial de saldos de los apartados Stori: captura semanal de saldo y comparación contra la revisión anterior.
+- Estimación de rendimiento separando depósitos y retiros registrados entre revisiones. La primera revisión solo establece una referencia; no inventa ganancias anteriores.
+- Los rendimientos positivos estimados se registran como ingreso en la categoría “Rendimientos de inversiones” y en la cuenta Stori. Las variaciones negativas se registran como ajuste de saldo para mantener la conciliación.
+- Mejor distribución de la lista de categorías en pantallas pequeñas.
+
+Importante: la estimación depende de registrar todos los depósitos y retiros ocurridos entre revisiones. Si falta algún movimiento o fecha, la variación puede no ser rendimiento real. No existe conexión automática con Stori.
